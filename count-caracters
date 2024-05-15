@@ -1,0 +1,76 @@
+#!/c/Users/Arnaud/AppData/Local/Microsoft/WindowsApps/python
+
+import argparse
+from collections import Counter
+import docx
+
+def extract_table_data(doc):
+    table_data = []
+    for table in doc.tables:
+        for row in table.rows:
+            row_data = []
+            for cell in row.cells:
+                row_data.append(cell.text)
+            table_data.append(row_data)
+    return table_data
+
+def count_characters_and_occurrences(doc):
+    table_data = extract_table_data(doc)
+
+    # (index 1) is for characters and the third column (index 2) is for dialogues
+    character_column_index = 1
+    dialogue_column_index = 2
+
+    character_dialogue_counts = Counter()
+    character_occurrences = Counter()
+
+    # Skip the header row
+    data_rows = table_data[1:]
+
+    # Count characters in dialogue and occurrences per character
+    for row in data_rows:
+        if len(row) > max(character_column_index, dialogue_column_index):
+            character = row[character_column_index]
+            dialogue = row[dialogue_column_index].replace("(REACC)", "").replace("(REACC ", "").replace("REACC)", "").replace("((REACC))", "").replace("((REACC", "").replace("REACC))", "").replace("REAC", "")
+            character_dialogue_counts[character] += len(dialogue)
+            character_occurrences[character] += 1
+
+    return character_dialogue_counts, character_occurrences
+
+def main():
+    parser = argparse.ArgumentParser(description="Compter les lettres dans les dialogues par personnage et les occurrences des personnages dans un document Word.")
+    parser.add_argument("input_file", help="Chemin vers le document Word d'entrée.")
+
+    args = parser.parse_args()
+
+    try:
+        doc = docx.Document(args.input_file)
+    except FileNotFoundError:
+        print(f"Le fichier {args.input_file} n'existe pas.")
+        parser.print_help()
+        return
+
+    character_dialogue_counts, character_occurrences = count_characters_and_occurrences(doc)
+
+    print("Nombre de lettres par personnage :")
+    for character, count in character_dialogue_counts.items():
+        if character_occurrences[character] >= 5:
+            print(f"{character}: {count} lettres")
+
+    print("\nNombre d'occurrences par personnage :")
+    for character, count in character_occurrences.items():
+        if character_occurrences[character] >= 5:
+            print(f"{character}: {count} occurrences")
+
+    print("\nTotal de lettres par personnage divisé par 50 :")
+    for character, count in character_dialogue_counts.items():
+        if character_occurrences[character] >= 5:
+            print(f"{character}: {count / 50:.2f}")
+
+    print("\nPersonnages avec moins de 5 occurrences :")
+    for character, count in character_occurrences.items():
+        if count < 5:
+            print(f"{character}: {count} occurrences")
+
+if __name__ == "__main__":
+    main()
