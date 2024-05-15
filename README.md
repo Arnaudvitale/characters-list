@@ -33,20 +33,19 @@ Au besoin tapez la commande suivante pour obtenir de l'aide :
 #### Exemple d'affichage des résultats :
 ```
 Nombre de lettres par personnage :
-JDOE: 500 lettres
-BIANCA: 450 lettres
+JDOE: 295 lettres
+ASSI: 60 lettres
 
 Nombre d'occurrences par personnage :
-JDOE: 10 occurrences
-BIANCA: 9 occurrences
+JDOE: 12 occurrences
+ASSI: 8 occurrences
 
 Total de lettres par personnage divisé par 50 :
-JDOE: 10.00
-BIANCA: 9.00
+JDOE: 5.90
+ASSI: 1.20
 
 Personnages avec moins de 5 occurrences :
-DAVE: 3 occurrences
-SEB: 2 occurrences
+DAVID: 2 occurrences
 ```
 
 ### Compatibilité
