@@ -19,7 +19,15 @@ pip install python-docx odfpy pymupdf
 
 Exécutez le script à l'aide de la commande suivante dans un terminal ou une invite de commande :
 ```
-./count_characters your_word_file.docx
+./count_characters votre_fichier.docx
+
+(ou)
+
+./count_characters votre_fichier.odt
+
+(ou)
+
+./count_characters votre_fichier.pdf
 ```
 
 Au besoin tapez la commande suivante pour obtenir de l'aide :
