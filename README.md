@@ -50,6 +50,12 @@ Personnages avec moins de 5 occurrences :
 DAVID: 2 occurrences
 ```
 
+### Faire son propre exécutable
+Pour créer votre propre exécutable, vous pouvez utiliser la bibliothèque PyInstaller. Pour ce faire, exécutez la commande suivante :
+```sh
+pyinstaller --onefile --windowed votre-script.py
+```
+
 ### Compatibilité
 L'executable fournit est compatible avec Windows seulement, pour MacOS il faudra exécuter le script Python. Vous pouvez l'utiliser sur des formats de fichiers '.docx', '.odt' et '.pdf'.
 

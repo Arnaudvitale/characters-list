@@ -1,0 +1,151 @@
+#!/c/Users/Arnaud/AppData/Local/Microsoft/WindowsApps/python
+
+import argparse
+from collections import Counter
+import docx
+from odf.opendocument import load as load_odt
+from odf.table import Table, TableRow, TableCell
+from odf.text import P
+import fitz
+import tkinter as tk
+from tkinter import filedialog, scrolledtext, messagebox
+import os
+
+def extract_table_data_from_docx(doc):
+    table_data = []
+    for table in doc.tables:
+        for row in table.rows:
+            row_data = []
+            for cell in row.cells:
+                row_data.append(cell.text)
+            table_data.append(row_data)
+    return table_data
+
+def extract_table_data_from_odt(doc):
+    table_data = []
+    for element in doc.getElementsByType(Table):
+        for row in element.getElementsByType(TableRow):
+            row_data = []
+            for cell in row.getElementsByType(TableCell):
+                cell_text = ""
+                for p in cell.getElementsByType(P):
+                    cell_text += p.textContent
+                row_data.append(cell_text)
+            table_data.append(row_data)
+    return table_data
+
+def extract_table_data_from_pdf(doc):
+    table_data = []
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text = page.get_text("text")
+        rows = text.split('\n')
+        for row in rows:
+            row_data = row.split()
+            table_data.append(row_data)
+    return table_data
+
+def count_characters_and_occurrences(table_data):
+    # Here (index 1) is for characters and the third column (index 2) is for dialogues
+    character_column_index = 1
+    dialogue_column_index = 2
+
+    character_dialogue_counts = Counter()
+    character_occurrences = Counter()
+
+    # Skip the header row
+    data_rows = table_data[1:]
+
+    # Count characters in dialogue and occurrences per character
+    for row in data_rows:
+        if len(row) > max(character_column_index, dialogue_column_index):
+            character = row[character_column_index]
+            dialogue = row[dialogue_column_index].replace("(REACC)", "").replace("(REACC ", "").replace("REACC)", "")
+            character_dialogue_counts[character] += len(dialogue)
+            character_occurrences[character] += 1
+
+    return character_dialogue_counts, character_occurrences
+
+def main(file_path):
+    table_data = []
+    try:
+        if file_path.endswith('.docx'):
+            doc = docx.Document(file_path)
+            table_data = extract_table_data_from_docx(doc)
+        elif file_path.endswith('.odt'):
+            doc = load_odt(file_path)
+            table_data = extract_table_data_from_odt(doc)
+        elif file_path.endswith('.pdf'):
+            doc = fitz.open(file_path)
+            table_data = extract_table_data_from_pdf(doc)
+        else:
+            messagebox.showerror("Erreur", "Format de fichier non supporté. Utilisez .docx, .odt, ou .pdf.")
+            os._exit(0)
+            return
+    except Exception as e:
+        messagebox.showerror("Erreur", f"Erreur en lisant le fichier: {e}")
+        os._exit(0)
+        return
+
+    try:
+        character_dialogue_counts, character_occurrences = count_characters_and_occurrences(table_data)
+    except ValueError as e:
+        messagebox.showerror("Erreur", str(e))
+        os._exit(0)
+        return
+
+    result = "Nombre de lettres par personnage :\n"
+    for character, count in character_dialogue_counts.items():
+        if character_occurrences[character] >= 5:
+            result += f"{character}: {count} lettres\n"
+
+    result += "\nNombre d'occurrences par personnage :\n"
+    for character, count in character_occurrences.items():
+        if character_occurrences[character] >= 5:
+            result += f"{character}: {count} occurrences\n"
+
+    result += "\nTotal de lettres par personnage divisé par 50 :\n"
+    for character, count in character_dialogue_counts.items():
+        if character_occurrences[character] >= 5:
+            result += f"{character}: {count / 50:.2f}\n"
+
+    result += "\nPersonnages avec moins de 5 occurrences :\n"
+    for character, count in character_occurrences.items():
+        if count < 5:
+            result += f"{character}: {count} occurrences\n"
+
+    show_results(result)
+
+def show_results(result):
+    result_window = tk.Toplevel(root)
+    result_window.title("Résultats")
+
+    text_area = scrolledtext.ScrolledText(result_window, wrap=tk.WORD, width=100, height=30)
+    text_area.insert(tk.INSERT, result)
+    text_area.configure(state='disabled')
+    text_area.pack(padx=10, pady=10)
+
+    def on_closing():
+        result_window.destroy()
+        os._exit(0)
+
+    result_window.protocol("WM_DELETE_WINDOW", on_closing)
+    result_window.mainloop()
+
+def select_file():
+    file_path = filedialog.askopenfilename(filetypes=[("Documents", "*.docx;*.odt;*.pdf")])
+    if file_path:
+        main(file_path)
+    else:
+        os._exit(0)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()
+    try:
+        select_file()
+    except Exception as e:
+        messagebox.showerror("Erreur", str(e))
+        os._exit(0)
+    root.mainloop()
+    os._exit(0)
