@@ -1,5 +1,5 @@
 # characters-list Project
-Ce script Python permet de compter le nombre de lettres dans les dialogues de chaque personnage et le nombre d'occurrences des personnages dans un document Word (.docx). Il est conçu pour traiter des documents contenant des tableaux avec des colonnes spécifiques pour les personnages et les dialogues.
+Ce script Python permet de compter le nombre de lettres dans les dialogues de chaque personnage et le nombre d'occurrences des personnages dans un document Word (.docx) ou OpenDocument (.odt) ou PDF (.pdf). Il est conçu pour traiter des documents contenant des tableaux avec des colonnes spécifiques pour les personnages et les dialogues.
 
 ### Prérequis
 - Python 3.12.3 ou supérieur
