@@ -3,8 +3,12 @@
 import argparse
 from collections import Counter
 import docx
+from odf.opendocument import load as load_odt
+from odf.table import Table, TableRow, TableCell
+from odf.text import P
+import fitz
 
-def extract_table_data(doc):
+def extract_table_data_from_docx(doc):
     table_data = []
     for table in doc.tables:
         for row in table.rows:
@@ -14,9 +18,31 @@ def extract_table_data(doc):
             table_data.append(row_data)
     return table_data
 
-def count_characters_and_occurrences(doc):
-    table_data = extract_table_data(doc)
+def extract_table_data_from_odt(doc):
+    table_data = []
+    for element in doc.getElementsByType(Table):
+        for row in element.getElementsByType(TableRow):
+            row_data = []
+            for cell in row.getElementsByType(TableCell):
+                cell_text = ""
+                for p in cell.getElementsByType(P):
+                    cell_text += p.textContent
+                row_data.append(cell_text)
+            table_data.append(row_data)
+    return table_data
 
+def extract_table_data_from_pdf(doc):
+    table_data = []
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text = page.get_text("text")
+        rows = text.split('\n')
+        for row in rows:
+            row_data = row.split()
+            table_data.append(row_data)
+    return table_data
+
+def count_characters_and_occurrences(table_data):
     # (index 1) is for characters and the third column (index 2) is for dialogues
     character_column_index = 1
     dialogue_column_index = 2
@@ -39,18 +65,37 @@ def count_characters_and_occurrences(doc):
 
 def main():
     parser = argparse.ArgumentParser(description="Compter les lettres dans les dialogues par personnage et les occurrences des personnages dans un document Word.")
-    parser.add_argument("input_file", help="Chemin vers le document Word d'entrée.")
+    parser.add_argument("input_file", help="Chemin vers le document d'entrée.")
 
     args = parser.parse_args()
+    input_file = args.input_file
 
-    try:
-        doc = docx.Document(args.input_file)
-    except FileNotFoundError:
-        print(f"Le fichier {args.input_file} n'existe pas.")
-        parser.print_help()
+    if input_file.endswith('.docx'):
+        try:
+            doc = docx.Document(input_file)
+            table_data = extract_table_data_from_docx(doc)
+        except Exception as e:
+            print(f"Erreur en lisant le fichier DOCX: {e}")
+            return
+    elif input_file.endswith('.odt'):
+        try:
+            doc = load_odt(input_file)
+            table_data = extract_table_data_from_odt(doc)
+        except Exception as e:
+            print(f"Erreur en lisant le fichier ODT: {e}")
+            return
+    elif input_file.endswith('.pdf'):
+        try:
+            doc = fitz.open(input_file)
+            table_data = extract_table_data_from_pdf(doc)
+        except Exception as e:
+            print(f"Erreur en lisant le fichier PDF: {e}")
+            return
+    else:
+        print("Format de fichier non supporté. Utilisez .docx, .odt, ou .pdf.")
         return
 
-    character_dialogue_counts, character_occurrences = count_characters_and_occurrences(doc)
+    character_dialogue_counts, character_occurrences = count_characters_and_occurrences(table_data)
 
     print("Nombre de lettres par personnage :")
     for character, count in character_dialogue_counts.items():

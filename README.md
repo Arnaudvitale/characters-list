@@ -6,11 +6,13 @@ Ce script Python permet de compter le nombre de lettres dans les dialogues de ch
 
 - Les bibliothèques Python suivantes :
   - python-docx
+  - odfpy
+  - pymupdf
 
 ### Installation des dépendances
 Pour installer les dépendances nécessaires, exécutez la commande suivante :
 ```sh
-pip install python-docx
+pip install python-docx odfpy pymupdf
 ```
 
 ### Utilisation
@@ -49,7 +51,7 @@ DAVID: 2 occurrences
 ```
 
 ### Compatibilité
-L'executable fournit est compatible avec Windows seulement, pour MacOS il faudra exécuter le script Python.
+L'executable fournit est compatible avec Windows seulement, pour MacOS il faudra exécuter le script Python. Vous pouvez l'utiliser sur des formats de fichiers '.docx', '.odt' et '.pdf'.
 
 ### Avertissement
 Le script ne fonctionne que sur word dans un tableau avec une colonne Timecode, une colonne Personnage et une colonne Dialogue. Pensez à modifier l'en-tête du script pour qu'il corresponde à votre chemin vers Python.
