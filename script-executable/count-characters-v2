@@ -8,6 +8,7 @@ from odf.text import P
 import tkinter as tk
 from tkinter import filedialog, scrolledtext, messagebox
 import os
+import re
 
 def extract_table_data_from_docx(doc):
     table_data = []
@@ -21,8 +22,8 @@ def extract_table_data_from_docx(doc):
 
 def extract_table_data_from_odt(doc):
     table_data = []
-    for table in doc.getElementsByType(Table):
-        for row in table.getElementsByType(TableRow):
+    for element in doc.getElementsByType(Table):
+        for row in element.getElementsByType(TableRow):
             row_data = []
             for cell in row.getElementsByType(TableCell):
                 cell_text = ""
@@ -32,6 +33,11 @@ def extract_table_data_from_odt(doc):
             table_data.append(row_data)
     return table_data
 
+def clean_dialogue(dialogue):
+    cleaned_dialogue = re.sub(r'\(?(REACC|FX)\)?', '', dialogue, flags=re.IGNORECASE)
+    cleaned_dialogue = cleaned_dialogue.strip()
+    return cleaned_dialogue
+
 def count_characters_and_occurrences(table_data):
     # Here (index 1) is for characters and the third column (index 2) is for dialogues
     character_column_index = 1
@@ -39,6 +45,7 @@ def count_characters_and_occurrences(table_data):
 
     character_dialogue_counts = Counter()
     character_occurrences = Counter()
+    character_dialogues = {}
 
     # Skip the header row
     data_rows = table_data[1:]
@@ -46,10 +53,17 @@ def count_characters_and_occurrences(table_data):
     # Count characters in dialogue and occurrences per character
     for row in data_rows:
         if len(row) > max(character_column_index, dialogue_column_index):
-            character = row[character_column_index]
-            dialogue = row[dialogue_column_index].replace("(REACC)", "").replace("(REACC ", "").replace("REACC)", "").replace("((REACC))", "").replace("((REACC", "").replace("REACC))", "").replace("REAC", "").replace("FX", "").replace("fx", "").replace("(FX)", "").replace("(FX", "").replace("FX)", "")
-            character_dialogue_counts[character] += len(dialogue)
+            character = row[character_column_index].upper().replace(" ", "")
+            dialogue = clean_dialogue(row[dialogue_column_index])
             character_occurrences[character] += 1
+            if character not in character_dialogues:
+                character_dialogues[character] = []
+            character_dialogues[character].append(dialogue)
+
+    # Concatenate all dialogues for each character and count total characters
+    for character, dialogues in character_dialogues.items():
+        concatenated_dialogue = " ".join(dialogues)
+        character_dialogue_counts[character] = len(concatenated_dialogue)
 
     return character_dialogue_counts, character_occurrences
 
@@ -108,6 +122,15 @@ def show_results(result):
     text_area.insert(tk.INSERT, result)
     text_area.configure(state='disabled')
     text_area.pack(padx=10, pady=10)
+
+    def copy_to_clipboard():
+        root.clipboard_clear()
+        root.clipboard_append(result)
+        root.update()
+        messagebox.showinfo("Info", "Les résultats ont été copiés dans le presse-papiers")
+
+    copy_button = tk.Button(result_window, text="Copier", command=copy_to_clipboard)
+    copy_button.pack(pady=10)
 
     def on_closing():
         result_window.destroy()
